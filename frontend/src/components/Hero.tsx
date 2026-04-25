@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Zap, ShieldCheck, HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import HowItWorksModal from './HowItWorksModal';
 
 export default function Hero() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="relative pt-32 pb-20 overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] opacity-30 pointer-events-none">
@@ -37,7 +41,10 @@ export default function Hero() {
               Analyze Prescription
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="px-8 py-4 rounded-2xl text-lg font-bold text-gray-600 hover:bg-gray-100 transition-all">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="px-8 py-4 rounded-2xl text-lg font-bold text-gray-600 hover:bg-gray-100 transition-all"
+            >
               See How it Works
             </button>
           </div>
@@ -58,6 +65,11 @@ export default function Hero() {
           </div>
         </motion.div>
       </div>
+      
+      <HowItWorksModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }
