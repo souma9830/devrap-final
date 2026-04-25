@@ -1,0 +1,6 @@
+{
+  "name": "RxRadar - Prescription Price Intelligence",
+  "description": "Smart prescription analysis platform to help users discover cheaper generic alternatives and save on healthcare costs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI Analysis", "Price Comparison", "Healthcare Optimization"]
+}
