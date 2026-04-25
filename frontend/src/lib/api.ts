@@ -76,7 +76,7 @@ export interface ParseResult {
   fallback: boolean;
 }
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const MOCK_PARSE_RESULT: ParseResult = {
   rawText: "Patient Name: John Doe\nDate: 25-Oct-2023\nRx\nAugmentin 625mg twice daily for 5 days\nCrocin 500mg thrice daily after meals\nLipitor 10mg once at night\nOmeprazole 20mg before breakfast",

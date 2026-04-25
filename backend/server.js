@@ -8,9 +8,9 @@ const { createWorker } = require('tesseract.js');
 const pdfParse = require('pdf-parse');
 
 const app  = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
+app.use(cors());
 app.use(express.json());
 
 // Multer: store uploads in memory (no disk clutter)
