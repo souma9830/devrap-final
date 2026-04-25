@@ -7,11 +7,11 @@ import { Medicine, MedicinePrice } from "./api";
 
 export const pharmacies = ["Apollo Pharmacy", "MedPlus", "Netmeds", "1mg", "Jan Aushadhi"];
 
-const generateHistoricalPrices = (base: number) => {
-  const dates = ['2026-01', '2026-02', '2026-03', '2026-04'];
+export const generateHistoricalPrices = (base: number) => {
+  const dates = ['2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04'];
   return dates.map((date, i) => ({
     date,
-    price: base * (1 + (Math.random() * 0.2 - 0.1)) // +/- 10%
+    price: parseFloat((base * (1 + (Math.random() * 0.2 - 0.1))).toFixed(2)) // +/- 10%
   }));
 };
 

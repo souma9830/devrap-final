@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import PrescriptionEngine from '../components/PrescriptionEngine';
 import Loader from '../components/Loader';
@@ -7,16 +7,18 @@ import MonthlyCostAnalyzer from '../components/MonthlyCostAnalyzer';
 import PharmacyDashboard from '../components/PharmacyDashboard';
 import GenericInsightsCard from '../components/GenericInsightsCard';
 import SavingsPlanCard from '../components/SavingsPlanCard';
-import SummaryCard from '../components/SummaryCard';
 import SmartBuyDecision from '../components/SmartBuyDecision';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzePrescription, AnalysisResult, ParsedDrug } from '../lib/api';
-import { Sparkles, ArrowLeft, AlertCircle, TrendingDown } from 'lucide-react';
+import { Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 
 export default function AnalyzePage() {
   const [loading, setLoading]   = useState(false);
-  const [results, setResults]   = useState<AnalysisResult[] | null>(null);
+  const [results, setResults]   = useState<AnalysisResult[] | null>(() => {
+    const saved = sessionStorage.getItem('rxradar_latest_results');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [error, setError]       = useState<string | null>(null);
 
   const handleAnalyze = async (drugs: ParsedDrug[]) => {
@@ -24,6 +26,7 @@ export default function AnalyzePage() {
     try {
       const data = await analyzePrescription(drugs);
       setResults(data);
+      sessionStorage.setItem('rxradar_latest_results', JSON.stringify(data));
     } catch (e: any) {
       setError('Could not connect to RxRadar backend. Make sure the server is running on port 5000.');
     } finally {
@@ -31,18 +34,6 @@ export default function AnalyzePage() {
     }
   };
 
-  // Totals
-  const totalCurrent   = results?.reduce((acc, r) => acc + r.currentInfo.price,    0) || 0;
-  const totalOptimized = results?.reduce((acc, r) => acc + (r.generic ? r.generic.bestPrice : r.bestInfo.price), 0) || 0;
-  const totalSavings   = totalCurrent - totalOptimized;
-
-  // Monthly totals
-  const totalMonthlyNow  = results?.reduce((acc, r) => acc + r.currentInfo.monthlyCost,  0) || 0;
-  const totalMonthlyBest = results?.reduce((acc, r) => acc + (r.generic ? r.generic.monthlyCost : r.bestInfo.monthlyCost), 0) || 0;
-  const totalMonthlySave = totalMonthlyNow - totalMonthlyBest;
-
-  // Worst variance across results
-  const maxVariance = results ? Math.max(...results.map(r => r.priceVariance?.pct ?? 0)) : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -73,7 +64,7 @@ export default function AnalyzePage() {
             {/* Topbar */}
             <div className="flex items-center justify-between">
               <button
-                onClick={() => { setResults(null); setError(null); }}
+                onClick={() => { setResults(null); setError(null); sessionStorage.removeItem('rxradar_latest_results'); }}
                 className="flex items-center text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors group"
               >
                 <ArrowLeft className="w-3.5 h-3.5 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -99,42 +90,6 @@ export default function AnalyzePage() {
                 <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-12 gap-6">
                   {/* ── Left Sidebar ── */}
                   <div className="col-span-12 lg:col-span-4 space-y-5">
-                    <SummaryCard totalCurrent={totalCurrent} totalOptimized={totalOptimized} totalSavings={totalSavings} />
-
-                    {/* Monthly Intelligence Panel */}
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                      className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-2xl p-5 text-white"
-                    >
-                      <p className="text-indigo-300 text-[10px] font-black uppercase tracking-widest mb-3">Monthly Cost Intelligence</p>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-indigo-200 font-medium">Current monthly spend</span>
-                          <span className="line-through text-indigo-300 font-bold">{formatCurrency(totalMonthlyNow)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-indigo-200 font-medium">Optimized monthly</span>
-                          <span className="text-emerald-400 font-black text-base">{formatCurrency(totalMonthlyBest)}</span>
-                        </div>
-                        <div className="h-px bg-indigo-700 my-1" />
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-emerald-400">
-                            <TrendingDown className="w-4 h-4" />
-                            <span className="text-sm font-black">You save monthly</span>
-                          </div>
-                          <span className="text-xl font-black text-emerald-300">{formatCurrency(totalMonthlySave)}</span>
-                        </div>
-                      </div>
-
-                      {maxVariance > 0 && (
-                        <div className={`mt-4 rounded-xl p-3 ${maxVariance >= 30 ? 'bg-red-500/20 border border-red-400/30' : 'bg-amber-500/20 border border-amber-400/30'}`}>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">⚠ Price Gap Alert</p>
-                          <p className="text-xs text-white/80 mt-0.5">
-                            Up to <span className="font-black text-amber-300">{maxVariance}%</span> price variance across pharmacies in your prescription.
-                          </p>
-                        </div>
-                      )}
-                    </motion.div>
-
                     {/* Smart Buy Decision — sidebar */}
                     <SmartBuyDecision results={results} />
 

@@ -52,7 +52,7 @@ function calcConfidence(type: DecisionType, result: AnalysisResult): number {
 
 // ── Rank the decisions for one medicine ──────────────────────────────────────
 function rankDecisions(result: AnalysisResult): Decision[] {
-  const { medicine, generic, bestInfo, currentInfo, priceVariance, dosesPerDay } = result;
+  const { medicine, generic, bestInfo, priceVariance } = result;
   const decisions: Decision[] = [];
 
   const exactConf   = calcConfidence('exact', result);
@@ -147,7 +147,7 @@ function ConfidenceBar({ score, accent }: { score: number; accent: string }) {
   const color = score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-blue-500' : 'bg-amber-400';
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
         <motion.div
           className={`h-full rounded-full ${color}`}
           initial={{ width: 0 }}
@@ -155,7 +155,7 @@ function ConfidenceBar({ score, accent }: { score: number; accent: string }) {
           transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
         />
       </div>
-      <span className={`text-[10px] font-black ${accent} min-w-[32px] text-right`}>{score}%</span>
+      <span className={`text-xs font-black ${accent} min-w-[32px] text-right`}>{score}%</span>
     </div>
   );
 }
@@ -184,23 +184,23 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
       className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
     >
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-violet-900 via-indigo-900 to-blue-900 px-6 py-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="bg-gradient-to-r from-violet-900 via-indigo-900 to-blue-900 px-6 py-6">
+        <div className="flex flex-col gap-2">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-4 h-4 text-violet-300" />
-              <p className="text-[10px] font-black text-violet-300 uppercase tracking-widest">Smart Buy Decision System</p>
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-5 h-5 text-violet-300" />
+              <p className="text-xs font-black text-violet-300 uppercase tracking-widest">Smart Buy Decision System</p>
             </div>
-            <h2 className="text-xl font-black text-white">AI-Ranked Recommendations</h2>
-            <p className="text-indigo-300 text-xs mt-1">Confidence-scored · Personalised to your prescription</p>
+            <h2 className="text-2xl font-black text-white leading-tight">AI-Ranked Recommendations</h2>
+            <p className="text-indigo-300 text-sm mt-1">Confidence-scored · Personalised to your prescription</p>
           </div>
           {topDecision && (
-            <div className="shrink-0 text-right">
-              <p className="text-[9px] text-violet-300 font-black uppercase tracking-widest">Top Pick</p>
-              <p className="text-sm font-black text-white mt-0.5 max-w-[160px] text-right leading-tight">{topDecision.title}</p>
-              <div className="flex items-center justify-end gap-1 mt-1">
-                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                <span className="text-yellow-400 text-[11px] font-black">{topDecision.confidence}% confident</span>
+            <div className="mt-4 bg-white/10 rounded-xl p-4 border border-white/10">
+              <p className="text-[10px] text-violet-300 font-black uppercase tracking-widest mb-1">Top Pick</p>
+              <p className="text-base font-black text-white leading-tight">{topDecision.title}</p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                <span className="text-yellow-400 text-xs font-black">{topDecision.confidence}% confident</span>
               </div>
             </div>
           )}
@@ -208,12 +208,12 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
 
         {/* Medicine selector tabs */}
         {results.length > 1 && (
-          <div className="mt-4 flex gap-2 flex-wrap">
+          <div className="mt-5 flex gap-2 flex-wrap">
             {results.map(r => (
               <button
                 key={r.medicine.id}
                 onClick={() => { setActiveId(r.medicine.id); setExpanded(null); }}
-                className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+                className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${
                   activeId === r.medicine.id
                     ? 'bg-white text-indigo-900 shadow-sm'
                     : 'bg-white/10 text-indigo-200 hover:bg-white/20'
@@ -233,7 +233,7 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="p-5 space-y-4"
+          className="p-5 space-y-5"
         >
           {decisions.map((decision, idx) => {
             const style   = TYPE_STYLES[decision.type];
@@ -246,62 +246,65 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.08 }}
-                className={`rounded-2xl border p-4 ${decision.isTop ? style.bg : 'bg-slate-50 border-slate-100'} ${RANK_RING[idx]}`}
+                className={`rounded-2xl border p-5 ${decision.isTop ? style.bg : 'bg-slate-50 border-slate-100'} ${RANK_RING[idx]}`}
               >
                 {/* Row: rank + icon + title + confidence */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    {/* Rank badge */}
-                    <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ${style.badge}`}>
-                        {RANK_LABEL[idx]}
-                      </span>
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center mt-1 ${
-                        decision.isTop ? 'bg-white shadow-sm' : 'bg-slate-100'
-                      } ${style.accent}`}>
-                        {style.icon}
-                      </div>
-                    </div>
-
-                    {/* Title block */}
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-black ${decision.isTop ? 'text-slate-900' : 'text-slate-600'}`}>
-                        {decision.title}
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{decision.subtitle}</p>
-
-                      {/* Saving delta */}
-                      {decision.saving && (
-                        <p className={`text-[11px] font-bold mt-1 ${style.accent}`}>
-                          {decision.saving}
-                        </p>
-                      )}
-
-                      {/* Confidence bar */}
-                      <div className="mt-2 w-full max-w-[200px]">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Confidence</span>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-4 min-w-0">
+                      {/* Rank badge */}
+                      <div className="shrink-0 flex flex-col items-center gap-1.5 pt-0.5">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${style.badge}`}>
+                          {RANK_LABEL[idx]}
+                        </span>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mt-1 ${
+                          decision.isTop ? 'bg-white shadow-sm' : 'bg-slate-100'
+                        } ${style.accent}`}>
+                          {style.icon}
                         </div>
-                        <ConfidenceBar score={decision.confidence} accent={style.accent} />
+                      </div>
+
+                      {/* Title block */}
+                      <div className="min-w-0 flex-1 pt-1">
+                        <p className={`text-base font-black ${decision.isTop ? 'text-slate-900' : 'text-slate-700'}`}>
+                          {decision.title}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1 font-medium">{decision.subtitle}</p>
+
+                        {/* Saving delta */}
+                        {decision.saving && (
+                          <p className={`text-sm font-bold mt-2 ${style.accent}`}>
+                            {decision.saving}
+                          </p>
+                        )}
                       </div>
                     </div>
+
+                    {/* Tag */}
+                    <div className="shrink-0 flex flex-col items-end gap-2">
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full tracking-wider ${
+                        decision.isTop ? style.badge : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {decision.tag}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Confidence bar */}
+                  <div className="w-full">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Confidence Score</span>
+                    </div>
+                    <ConfidenceBar score={decision.confidence} accent={style.accent} />
                   </div>
 
-                  {/* Tag */}
-                  <div className="shrink-0 flex flex-col items-end gap-2">
-                    <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-full tracking-wider ${
-                      decision.isTop ? style.badge : 'bg-slate-200 text-slate-500'
-                    }`}>
-                      {decision.tag}
-                    </span>
-                    <button
-                      onClick={() => setExpanded(isOpen ? null : `${activeId}-${decision.type}`)}
-                      className="text-[9px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-0.5 mt-1"
-                    >
-                      {isOpen ? 'Less' : 'More'}
-                      {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : `${activeId}-${decision.type}`)}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 mt-2 w-full py-2 bg-white/50 border border-slate-200/50 rounded-lg transition-colors"
+                  >
+                    {isOpen ? 'Hide Details' : 'View Details'}
+                    {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
                 </div>
 
                 {/* Expanded: rationale + script ──────────────────────────── */}
@@ -314,36 +317,36 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 space-y-3 pt-3 border-t border-black/5">
+                      <div className="mt-5 space-y-4 pt-4 border-t border-black/5">
                         {/* Rationale */}
-                        <div className="flex items-start gap-2">
-                          <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                          <p className="text-xs text-slate-600 leading-relaxed">{decision.rationale}</p>
+                        <div className="flex items-start gap-3 bg-white/60 p-4 rounded-xl border border-slate-200/50">
+                          <Info className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                          <p className="text-sm text-slate-700 font-medium leading-relaxed">{decision.rationale}</p>
                         </div>
 
                         {/* One-click script */}
-                        <div className="rounded-xl bg-slate-900 overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-                            <div className="flex items-center gap-1.5">
-                              <ArrowRight className="w-3 h-3 text-blue-400" />
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="rounded-xl bg-slate-900 overflow-hidden shadow-lg">
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                            <div className="flex items-center gap-2">
+                              <ArrowRight className="w-4 h-4 text-blue-400" />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 {decision.type === 'consult' ? 'Doctor Script' : 'Pharmacist Script'}
                               </span>
                             </div>
                             <button
                               onClick={() => handleCopy(decision.script, copyKey)}
-                              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded-lg transition-colors active:scale-95"
+                              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors active:scale-95"
                             >
                               {copied === copyKey
-                                ? <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                                : <Copy className="w-3 h-3 text-slate-400" />
+                                ? <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                : <Copy className="w-4 h-4 text-slate-400" />
                               }
-                              <span className="text-[9px] font-bold text-slate-300">
-                                {copied === copyKey ? 'Copied!' : 'Copy'}
+                              <span className="text-xs font-bold text-slate-300">
+                                {copied === copyKey ? 'Copied!' : 'Copy Script'}
                               </span>
                             </button>
                           </div>
-                          <p className="px-3 py-3 text-[11px] text-white font-medium italic leading-relaxed">
+                          <p className="px-4 py-4 text-sm text-white font-medium italic leading-relaxed">
                             "{decision.script}"
                           </p>
                         </div>
@@ -358,11 +361,11 @@ export default function SmartBuyDecision({ results }: SmartBuyDecisionProps) {
       </AnimatePresence>
 
       {/* ── Footer: how confidence is calculated ─────────────────────────── */}
-      <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            <strong className="text-slate-600">Confidence scoring</strong> is based on price variance, generic savings %, therapeutic equivalence, and availability. Always consult your doctor before switching medications.
+      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+            <strong className="text-slate-700 font-bold">Confidence scoring</strong> is based on price variance, generic savings %, therapeutic equivalence, and availability. Always consult your doctor before switching medications.
           </p>
         </div>
       </div>

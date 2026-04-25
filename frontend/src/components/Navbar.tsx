@@ -1,7 +1,12 @@
-import { Search, Info, ShieldCheck, Github } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Activity, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { medicines } from '../lib/mockData';
 
 export default function Navbar() {
+  const location = useLocation();
+  const path = location.pathname;
+  
   return (
     <nav className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-50">
       <div className="flex items-center space-x-8">
@@ -12,10 +17,19 @@ export default function Navbar() {
           </span>
         </Link>
         
-        <div className="hidden md:flex space-x-6 text-sm font-medium text-slate-500">
-          <Link to="/analyze" className="text-blue-600 border-b-2 border-blue-600 h-14 flex items-center">Intelligence Dashboard</Link>
-          <a href="#features" className="hover:text-slate-800 h-14 flex items-center transition-colors">Price History</a>
-          <a href="#how-it-works" className="hover:text-slate-800 h-14 flex items-center transition-colors">Savings Reports</a>
+        <div className="hidden md:flex space-x-6 text-sm font-medium text-slate-500 relative">
+          <Link to="/analyze" className={`h-14 flex items-center ${path.includes('/analyze') ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800 transition-colors'}`}>
+            Intelligence Dashboard
+          </Link>
+          
+          <Link to="/price-history" className={`h-14 flex items-center gap-1.5 ${path === '/price-history' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800 transition-colors'}`}>
+            <Activity className={`w-4 h-4 ${path === '/price-history' ? 'text-blue-600' : 'text-emerald-500'}`} />
+            Price History
+          </Link>
+          
+          <Link to="/savings-reports" className={`h-14 flex items-center transition-colors ${path === '/savings-reports' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800'}`}>
+            Savings Reports
+          </Link>
         </div>
       </div>
       
