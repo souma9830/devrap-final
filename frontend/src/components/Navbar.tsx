@@ -30,6 +30,10 @@ export default function Navbar() {
           <Link to="/savings-reports" className={`h-14 flex items-center transition-colors ${path === '/savings-reports' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800'}`}>
             Savings Reports
           </Link>
+
+          <Link to="/pharmacy-network" className={`h-14 flex items-center transition-colors ${path === '/pharmacy-network' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800'}`}>
+            Pharmacy Network
+          </Link>
         </div>
       </div>
       

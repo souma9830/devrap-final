@@ -4,9 +4,7 @@ import PrescriptionEngine from '../components/PrescriptionEngine';
 import Loader from '../components/Loader';
 import PriceIntelligenceCard from '../components/PriceIntelligenceCard';
 import MonthlyCostAnalyzer from '../components/MonthlyCostAnalyzer';
-import PharmacyDashboard from '../components/PharmacyDashboard';
 import GenericInsightsCard from '../components/GenericInsightsCard';
-import SavingsPlanCard from '../components/SavingsPlanCard';
 import SmartBuyDecision from '../components/SmartBuyDecision';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzePrescription, AnalysisResult, ParsedDrug } from '../lib/api';
@@ -38,7 +36,7 @@ export default function AnalyzePage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Navbar />
-      <main className="max-w-[1024px] mx-auto px-6 pt-12">
+      <main className="max-w-[1400px] mx-auto px-6 pt-12">
         {!results && !loading ? (
           <div className="max-w-2xl mx-auto">
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
@@ -87,21 +85,18 @@ export default function AnalyzePage() {
                   <p className="text-slate-400 text-sm mt-2">Try brand names like "Lipitor", "Augmentin", or "Crocin".</p>
                 </motion.div>
               ) : results && (
-                <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-12 gap-6">
-                  {/* ── Left Sidebar ── */}
-                  <div className="col-span-12 lg:col-span-4 space-y-5">
-                    {/* Smart Buy Decision — sidebar */}
+                <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-12 gap-6 items-start">
+                  {/* ── Left Sidebar: Decision & Input ── */}
+                  <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-6">
                     <SmartBuyDecision results={results} />
-
-                    {/* Re-scan */}
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 px-1">New Scan</p>
                       <PrescriptionEngine onAnalyze={handleAnalyze} isLoading={loading} />
                     </div>
                   </div>
 
-                  {/* ── Right: Results ── */}
-                  <div className="col-span-12 lg:col-span-8 space-y-5">
+                  {/* ── Middle: Primary Intelligence ── */}
+                  <div className="col-span-12 lg:col-span-4 space-y-6">
                     <div className="flex items-center justify-between px-1">
                       <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
                         Price Intelligence ({results.length} medicines)
@@ -119,15 +114,11 @@ export default function AnalyzePage() {
                         <PriceIntelligenceCard result={res} index={i} />
                       </div>
                     ))}
+                  </div>
 
-                    {/* ── Pharmacy Comparison Dashboard ── */}
-                    <PharmacyDashboard results={results} />
-
-                    {/* ── Generic & Substitution Insights ── */}
+                  {/* ── Right: Market & Insights ── */}
+                  <div className="col-span-12 lg:col-span-4 space-y-6">
                     <GenericInsightsCard results={results} />
-
-                    {/* ── Savings Plan Generator ── */}
-                    <SavingsPlanCard results={results} />
                   </div>
                 </motion.div>
               )}
