@@ -239,11 +239,9 @@ app.post('/api/parse-prescription', upload.single('file'), async (req, res) => {
 
     let parsedDrugs = localParseText(rawText);
 
-    // MOCK FALLBACK FOR SCANNED PDFs / EMPTY PDFs
+    // If no drugs were parsed from the PDF, just return an empty array without hallucinating mock data.
     if (req.file && req.file.mimetype === 'application/pdf' && parsedDrugs.length === 0) {
-      console.log('⚠️ No text/drugs found in PDF. Using mock OCR text for demo.');
-      rawText = `Patient Name: John Doe\nDate: 25-Oct-2023\nRx\nAugmentin 625mg twice daily for 5 days\nCrocin 500mg thrice daily after meals\nLipitor 10mg once at night\nOmeprazole 20mg before breakfast\nAmlodipine 5mg daily`;
-      parsedDrugs = localParseText(rawText);
+      console.log('⚠️ No text/drugs found in PDF. Returning empty result.');
     }
 
     res.json({
