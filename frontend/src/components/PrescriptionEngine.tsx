@@ -86,7 +86,10 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
         setOcrStatus('Parsing prescription text...');
         result = await parsePrescriptionText(text);
       }
-      setParsedDrugs(result.parsedDrugs);
+      // Only keep the actual medicines that match our database, discarding random OCR noise
+      const validMedicines = result.parsedDrugs.filter((d: ParsedDrug) => d.dbMatch);
+      setParsedDrugs(validMedicines);
+      
       setRawText(result.rawText || '');
       setStage('preview');
     } catch (e: any) {
