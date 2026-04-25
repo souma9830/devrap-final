@@ -12,9 +12,9 @@ interface MonthlyCostAnalyzerProps {
 }
 
 const DURATIONS = [
-  { label: '1 Mo',  months: 1  },
-  { label: '3 Mo',  months: 3  },
-  { label: '6 Mo',  months: 6  },
+  { label: '1 Mo', months: 1 },
+  { label: '3 Mo', months: 3 },
+  { label: '6 Mo', months: 6 },
   { label: '12 Mo', months: 12 },
   { label: '24 Mo', months: 24 },
 ];
@@ -31,15 +31,16 @@ function SavingsProjectionChart({
   optimizedMonthly: number;
   months: number;
 }) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const W = 560, H = 160, PAD = { top: 12, right: 16, bottom: 28, left: 48 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
   const points = Array.from({ length: months + 1 }, (_, i) => ({
-    month:     i,
-    current:   currentMonthly   * i,
+    month: i,
+    current: currentMonthly * i,
     optimized: optimizedMonthly * i,
-    saving:    (currentMonthly - optimizedMonthly) * i,
+    saving: (currentMonthly - optimizedMonthly) * i,
   }));
 
   const maxVal = currentMonthly * months;
@@ -55,11 +56,14 @@ function SavingsProjectionChart({
     `${toPath(key)} L ${xScale(months)} ${PAD.top + innerH} L ${PAD.left} ${PAD.top + innerH} Z`;
 
   // X-axis labels: show every N months based on range
-  const step   = months <= 6 ? 1 : months <= 12 ? 2 : 4;
+  const step = months <= 6 ? 1 : months <= 12 ? 2 : 4;
   const xTicks = points.filter(p => p.month % step === 0);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div
+      className="relative w-full select-none"
+      onMouseLeave={() => setHoverIndex(null)}
+    >
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 300 }}>
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map(frac => {
@@ -111,6 +115,38 @@ function SavingsProjectionChart({
           ₹ Spend
         </text>
 
+        {/* Interactive Hover Zones */}
+        {points.map((p, i) => {
+          const xStart = i === 0 ? PAD.left : xScale(i - 0.5);
+          const xEnd = i === months ? W - PAD.right : xScale(i + 0.5);
+          return (
+            <rect
+              key={`hover-${i}`}
+              x={xStart}
+              y={PAD.top}
+              width={Math.max(0, xEnd - xStart)}
+              height={innerH}
+              fill="transparent"
+              onMouseEnter={() => setHoverIndex(i)}
+              onTouchStart={() => setHoverIndex(i)}
+              className="cursor-crosshair outline-none"
+            />
+          );
+        })}
+
+        {/* Active Hover State (Vertical line & dots) */}
+        {hoverIndex !== null && (
+          <g className="pointer-events-none">
+            <line
+              x1={xScale(hoverIndex)} x2={xScale(hoverIndex)}
+              y1={PAD.top} y2={PAD.top + innerH}
+              stroke="#94a3b8" strokeDasharray="4 4" strokeWidth="1"
+            />
+            <circle cx={xScale(hoverIndex)} cy={yScale(points[hoverIndex].optimized)} r="4.5" fill="#10b981" stroke="#fff" strokeWidth="2" />
+            <circle cx={xScale(hoverIndex)} cy={yScale(points[hoverIndex].current)} r="4.5" fill="#f97316" stroke="#fff" strokeWidth="2" />
+          </g>
+        )}
+
         {/* Gradient defs */}
         <defs>
           <linearGradient id="currentGrad" x1="0" y1="0" x2="0" y2="1">
@@ -124,8 +160,51 @@ function SavingsProjectionChart({
         </defs>
       </svg>
 
+      {/* HTML Tooltip */}
+      <AnimatePresence>
+        {hoverIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute pointer-events-none bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-700/50 p-3 z-20 min-w-[160px]"
+            style={{
+              left: xScale(hoverIndex) > W / 2 ? 'auto' : `calc(${(xScale(hoverIndex) / W) * 100}% + 12px)`,
+              right: xScale(hoverIndex) > W / 2 ? `calc(${100 - (xScale(hoverIndex) / W) * 100}% + 12px)` : 'auto',
+              top: '15%'
+            }}
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700 pb-1.5">
+              Month {hoverIndex}
+            </p>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  <span className="text-slate-300">Standard</span>
+                </div>
+                <span className="font-bold text-orange-400">{formatCurrency(points[hoverIndex].current)}</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-slate-300">Optimised</span>
+                </div>
+                <span className="font-bold text-emerald-400">{formatCurrency(points[hoverIndex].optimized)}</span>
+              </div>
+              {points[hoverIndex].saving > 0 && (
+                <div className="mt-2 pt-2 border-t border-slate-700 flex justify-between items-center gap-4">
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">You Save</span>
+                  <span className="font-black text-emerald-400">{formatCurrency(points[hoverIndex].saving)}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Legend */}
-      <div className="flex items-center gap-5 justify-center mt-1">
+      <div className="flex items-center gap-5 justify-center mt-2">
         <div className="flex items-center gap-1.5">
           <span className="w-6 h-0.5 bg-orange-500 inline-block rounded" />
           <span className="text-[10px] text-slate-500 font-medium">Current spend</span>
@@ -150,14 +229,14 @@ function MedCostRow({
   maxMonthly: number;
 }) {
   const { medicine } = result;
-  const currentTotal   = result.currentInfo.monthlyCost * months;
+  const currentTotal = result.currentInfo.monthlyCost * months;
   const optimizedMonthly = result.generic
     ? result.generic.monthlyCost
     : result.bestInfo.monthlyCost;
   const optimizedTotal = optimizedMonthly * months;
-  const saving         = currentTotal - optimizedTotal;
-  const barPct         = maxMonthly > 0 ? (result.currentInfo.monthlyCost / maxMonthly) * 100 : 0;
-  const isChronic      = CHRONIC_CATEGORIES.includes(medicine.category ?? '');
+  const saving = currentTotal - optimizedTotal;
+  const barPct = maxMonthly > 0 ? (result.currentInfo.monthlyCost / maxMonthly) * 100 : 0;
+  const isChronic = CHRONIC_CATEGORIES.includes(medicine.category ?? '');
 
   return (
     <div className="py-3 border-b border-slate-50 last:border-0">
@@ -214,26 +293,26 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
 
   // Aggregate values
   const agg = useMemo(() => {
-    const currentMonthly   = results.reduce((s, r) => s + r.currentInfo.monthlyCost, 0);
+    const currentMonthly = results.reduce((s, r) => s + r.currentInfo.monthlyCost, 0);
     const optimizedMonthly = results.reduce((s, r) => {
       return s + (r.generic ? r.generic.monthlyCost : r.bestInfo.monthlyCost);
     }, 0);
     const savingMonthly = currentMonthly - optimizedMonthly;
 
     return {
-      currentMonthly:   parseFloat(currentMonthly.toFixed(2)),
+      currentMonthly: parseFloat(currentMonthly.toFixed(2)),
       optimizedMonthly: parseFloat(optimizedMonthly.toFixed(2)),
-      savingMonthly:    parseFloat(savingMonthly.toFixed(2)),
+      savingMonthly: parseFloat(savingMonthly.toFixed(2)),
 
-      currentPeriod:    parseFloat((currentMonthly   * duration).toFixed(2)),
-      optimizedPeriod:  parseFloat((optimizedMonthly * duration).toFixed(2)),
-      savingPeriod:     parseFloat((savingMonthly     * duration).toFixed(2)),
+      currentPeriod: parseFloat((currentMonthly * duration).toFixed(2)),
+      optimizedPeriod: parseFloat((optimizedMonthly * duration).toFixed(2)),
+      savingPeriod: parseFloat((savingMonthly * duration).toFixed(2)),
 
-      currentAnnual:    parseFloat((currentMonthly   * 12).toFixed(2)),
-      optimizedAnnual:  parseFloat((optimizedMonthly * 12).toFixed(2)),
-      savingAnnual:     parseFloat((savingMonthly     * 12).toFixed(2)),
+      currentAnnual: parseFloat((currentMonthly * 12).toFixed(2)),
+      optimizedAnnual: parseFloat((optimizedMonthly * 12).toFixed(2)),
+      savingAnnual: parseFloat((savingMonthly * 12).toFixed(2)),
 
-      savingPct:        currentMonthly > 0
+      savingPct: currentMonthly > 0
         ? Math.round((savingMonthly / currentMonthly) * 100) : 0,
 
       chronicCount: results.filter(r => CHRONIC_CATEGORIES.includes(r.medicine.category ?? '')).length,
@@ -283,11 +362,10 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
               <button
                 key={d.months}
                 onClick={() => setDuration(d.months)}
-                className={`text-[10px] font-black px-3 py-1 rounded-lg transition-all ${
-                  duration === d.months
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                }`}
+                className={`text-[10px] font-black px-3 py-1 rounded-lg transition-all ${duration === d.months
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                  }`}
               >
                 {d.label}
               </button>
@@ -296,10 +374,10 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6">
 
         {/* ── 4 Summary Tiles ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Tile
             label="Monthly Burden"
             value={formatCurrency(agg.currentMonthly)}
@@ -333,131 +411,143 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
           />
         </div>
 
-        {/* ── Current vs Optimised bar comparison ─────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-            Spend Comparison — {duration} months
-          </p>
-          <div className="space-y-3">
-            {/* Current bar */}
-            <div>
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="font-bold text-slate-600">Current spend</span>
-                <span className="font-black text-orange-600">{formatCurrency(agg.currentPeriod)}</span>
-              </div>
-              <div className="h-5 bg-slate-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-end pr-2"
-                  initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                >
-                  <span className="text-[8px] font-black text-white">100%</span>
-                </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ── LEFT COLUMN: Graph & Milestones ── */}
+          <div className="lg:col-span-7 space-y-6">
+
+            {/* ── Cumulative spend SVG chart ───────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 p-5 bg-slate-50/50">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                Cumulative Spend Over {duration} Months
+              </p>
+              <SavingsProjectionChart
+                currentMonthly={agg.currentMonthly}
+                optimizedMonthly={agg.optimizedMonthly}
+                months={duration}
+              />
+            </div>
+
+            {/* ── Milestone projections ────────────────────────────────────────── */}
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-5">
+              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">
+                Long-term Saving Milestones
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[3, 6, 12, 24].map(m => (
+                  <div key={m} className={`rounded-xl p-3 bg-white border ${duration === m ? 'border-indigo-300 shadow-sm' : 'border-slate-100'}`}>
+                    <p className="text-[9px] font-black text-slate-400 uppercase">{m} months</p>
+                    <p className="text-sm font-black text-indigo-700 mt-1">{formatCurrency(agg.savingMonthly * m)}</p>
+                    <p className="text-[9px] text-slate-400 font-medium">total saved</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Optimised bar */}
-            <div>
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="font-bold text-slate-600">Optimised spend</span>
-                <span className="font-black text-emerald-600">{formatCurrency(agg.optimizedPeriod)}</span>
-              </div>
-              <div className="h-5 bg-slate-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 flex items-center justify-end pr-2"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${100 - agg.savingPct}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
-                >
-                  <span className="text-[8px] font-black text-white">{100 - agg.savingPct}%</span>
-                </motion.div>
-              </div>
-            </div>
-
-            {/* Saving indicator */}
-            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 mt-1">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[11px] font-bold text-emerald-800">
-                  You save {formatCurrency(agg.savingPeriod)} over {duration} month{duration > 1 ? 's' : ''}
-                </span>
-              </div>
-              <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                −{agg.savingPct}%
-              </span>
-            </div>
           </div>
-        </div>
 
-        {/* ── Cumulative spend SVG chart ───────────────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-            Cumulative Spend Over {duration} Months
-          </p>
-          <SavingsProjectionChart
-            currentMonthly={agg.currentMonthly}
-            optimizedMonthly={agg.optimizedMonthly}
-            months={duration}
-          />
-        </div>
+          {/* ── RIGHT COLUMN: Bars & Breakdown ── */}
+          <div className="lg:col-span-5 space-y-6">
 
-        {/* ── Chronic analysis alert ───────────────────────────────────────── */}
-        {agg.chronicCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
-          >
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            {/* ── Current vs Optimised bar comparison ─────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                Spend Comparison — {duration} months
+              </p>
+              <div className="space-y-3">
+                {/* Current bar */}
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span className="font-bold text-slate-600">Current spend</span>
+                    <span className="font-black text-orange-600">{formatCurrency(agg.currentPeriod)}</span>
+                  </div>
+                  <div className="h-5 bg-slate-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-end pr-2"
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                    >
+                      <span className="text-[8px] font-black text-white">100%</span>
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Optimised bar */}
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span className="font-bold text-slate-600">Optimised spend</span>
+                    <span className="font-black text-emerald-600">{formatCurrency(agg.optimizedPeriod)}</span>
+                  </div>
+                  <div className="h-5 bg-slate-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 flex items-center justify-end pr-2"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${100 - agg.savingPct}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
+                    >
+                      <span className="text-[8px] font-black text-white">{100 - agg.savingPct}%</span>
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Saving indicator */}
+                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 mt-1">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-[11px] font-bold text-emerald-800">
+                      You save {formatCurrency(agg.savingPeriod)} over {duration} month{duration > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    −{agg.savingPct}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Chronic analysis alert ───────────────────────────────────────── */}
+            {agg.chronicCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-black text-amber-800">
+                      Chronic Condition Detected
+                    </p>
+                    <p className="text-[10px] text-amber-700 mt-1 leading-relaxed">
+                      {agg.chronicCount} medicine{agg.chronicCount > 1 ? 's are' : ' is'} for chronic conditions.
+                      At current pricing, your <strong>5-year burden</strong> would be{' '}
+                      <strong>{formatCurrency(agg.currentMonthly * 60)}</strong>.
+                      Optimising now saves <strong>{formatCurrency(agg.savingMonthly * 60)}</strong> over 5 years.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Per-medicine breakdown ───────────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 p-5">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Per-Medicine Breakdown — {duration} months
+              </p>
+              <p className="text-[9px] text-slate-400 mb-3">Bars show relative monthly burden</p>
               <div>
-                <p className="text-xs font-black text-amber-800">
-                  Chronic Condition Detected — Long-term Cost Impact
-                </p>
-                <p className="text-[10px] text-amber-700 mt-1 leading-relaxed">
-                  {agg.chronicCount} medicine{agg.chronicCount > 1 ? 's are' : ' is'} for chronic conditions.
-                  At current pricing, your <strong>5-year burden</strong> would be{' '}
-                  <strong>{formatCurrency(agg.currentMonthly * 60)}</strong>.
-                  Optimising now saves <strong>{formatCurrency(agg.savingMonthly * 60)}</strong> over 5 years.
-                </p>
+                {results.map(r => (
+                  <React.Fragment key={r.medicine.id}>
+                    <MedCostRow
+                      result={r}
+                      months={duration}
+                      maxMonthly={maxMonthly}
+                    />
+                  </React.Fragment>
+                ))}
               </div>
             </div>
-          </motion.div>
-        )}
 
-        {/* ── Per-medicine breakdown ───────────────────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-            Per-Medicine Breakdown — {duration} months
-          </p>
-          <p className="text-[9px] text-slate-400 mb-3">Bars show relative monthly burden</p>
-          <div>
-            {results.map(r => (
-              <React.Fragment key={r.medicine.id}>
-                <MedCostRow
-                  result={r}
-                  months={duration}
-                  maxMonthly={maxMonthly}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Milestone projections ────────────────────────────────────────── */}
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">
-            Long-term Saving Milestones
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[3, 6, 12, 24].map(m => (
-              <div key={m} className={`rounded-xl p-3 bg-white border ${duration === m ? 'border-indigo-300 shadow-sm' : 'border-slate-100'}`}>
-                <p className="text-[9px] font-black text-slate-400 uppercase">{m} months</p>
-                <p className="text-sm font-black text-indigo-700 mt-1">{formatCurrency(agg.savingMonthly * m)}</p>
-                <p className="text-[9px] text-slate-400 font-medium">total saved</p>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -474,10 +564,10 @@ function Tile({ label, value, sub, color, icon, hero, strikeValue, savingValue }
   strikeValue?: string; savingValue?: string;
 }) {
   const colors = {
-    orange:  { bg: 'bg-orange-50  border-orange-100',  text: 'text-orange-700',  icon: 'bg-orange-100'  },
+    orange: { bg: 'bg-orange-50  border-orange-100', text: 'text-orange-700', icon: 'bg-orange-100' },
     emerald: { bg: 'bg-emerald-50 border-emerald-100', text: 'text-emerald-700', icon: 'bg-emerald-100' },
-    blue:    { bg: 'bg-blue-50    border-blue-100',    text: 'text-blue-700',    icon: 'bg-blue-100'    },
-    violet:  { bg: 'bg-violet-50  border-violet-200',  text: 'text-violet-700',  icon: 'bg-violet-100'  },
+    blue: { bg: 'bg-blue-50    border-blue-100', text: 'text-blue-700', icon: 'bg-blue-100' },
+    violet: { bg: 'bg-violet-50  border-violet-200', text: 'text-violet-700', icon: 'bg-violet-100' },
   }[color];
 
   return (
