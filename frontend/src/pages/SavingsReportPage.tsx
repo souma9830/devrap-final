@@ -24,13 +24,16 @@ export default function SavingsReportPage() {
   const maxVariance = results ? Math.max(...results.map(r => r.priceVariance?.pct ?? 0)) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <Navbar />
+    <div className="min-h-screen bg-slate-50 pb-20 print:bg-white print:pb-0">
+      <div className="print:hidden">
+        <Navbar />
+      </div>
+
       
       <main className="max-w-[1024px] mx-auto px-6 pt-12">
         <Link 
           to="/analyze" 
-          className="inline-flex items-center text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors group mb-8 bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-full"
+          className="print:hidden inline-flex items-center text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors group mb-8 bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-full"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           BACK TO DASHBOARD
@@ -47,7 +50,10 @@ export default function SavingsReportPage() {
             </p>
           </div>
           {results && (
-            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-colors shadow-lg shadow-blue-500/20">
+            <button 
+              onClick={() => window.print()}
+              className="print:hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-colors shadow-lg shadow-blue-500/20"
+            >
               <Download className="w-4 h-4" />
               Export PDF
             </button>

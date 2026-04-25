@@ -15,3 +15,31 @@ body {
   background-color: #dbeafe;
   color: #1e3a8a;
 }
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Force all semi-transparent elements to be fully opaque in print */
+  .opacity-50, .opacity-60, .opacity-70, .opacity-80 {
+    opacity: 1 !important;
+  }
+
+  /* Deepen all slate and gray text significantly */
+  .text-slate-300, .text-gray-300 { color: #64748b !important; } /* slate-500 equivalent */
+  .text-slate-400, .text-gray-400 { color: #475569 !important; } /* slate-600 equivalent */
+  .text-slate-500, .text-gray-500 { color: #1e293b !important; } /* slate-800 equivalent */
+  .text-slate-600, .text-gray-600 { color: #0f172a !important; } /* slate-900 equivalent */
+
+  /* Deepen light backgrounds for boxes to ensure they are visible */
+  .bg-slate-50, .bg-gray-50 { background-color: #e2e8f0 !important; } /* slate-200 equivalent */
+  .bg-slate-100, .bg-gray-100 { background-color: #cbd5e1 !important; } /* slate-300 equivalent */
+  .bg-blue-50 { background-color: #dbeafe !important; } /* blue-100 equivalent */
+  .bg-emerald-50 { background-color: #d1fae5 !important; } /* emerald-100 equivalent */
+
+  /* Ensure text inside colored boxes (like SummaryCard) remains legible and bold */
+  .text-white { color: #ffffff !important; }
+  .text-emerald-300, .text-emerald-400 { color: #059669 !important; } /* deeper emerald for text */
+}
